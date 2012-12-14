@@ -18,6 +18,9 @@ string g_sRemove = "Package is automatically removed.";
 // name replacers (%n %o %f) do not work here. Done to avoid postponed detach event.
 string g_sByeString = "Thank you for using our services, we hope you will enjoy your purchase.";
 
+// hover text color
+vector g_vColor = <0.0, 1.0, 1.0>;
+
 key g_kUser;
 
 string strReplace(string str, string search, string replace) 
@@ -48,6 +51,12 @@ string parseString(string s)
     return res;
 }
 
+Notify(string msg)
+{
+    string s = msg;
+    llInstantMessage(g_kUser, msg);
+    llSetText(msg, g_vColor, 1.0);  
+}
 
 list ReadInvenotory()
 {
@@ -62,6 +71,9 @@ list ReadInvenotory()
         s =llGetInventoryName(INVENTORY_ALL,i);
         if ( s != scriptName)
         {
+            llSetText(g_sNotify + "\nProcessing... " +(string)(i*100.0/count) + "%",
+                g_vColor, 1.0);  
+            
             // add  to to-be-give
             inventory = s + inventory;  // best LSL-Mono way
             //inventory = (inventory=[]) + inventory + s;  // best LSL way
@@ -73,7 +85,7 @@ list ReadInvenotory()
 ProcessInventory(string folder)
 {
     
-    llOwnerSay(parseString(g_sNotify));  
+    Notify(g_sNotify);  
     // read inventory
     list ToBeGiven = ReadInvenotory();  
     
@@ -93,15 +105,16 @@ GiveInventory()
     {
         if(g_bDetachAfterUse) 
         {
-            llOwnerSay(parseString(g_sRemove));
+            Notify(g_sRemove);
+            llSleep(2.0);
             llDetachFromAvatar(); // detachm perm granted to attached objects
         }
     } 
     else
         if(g_bCleanLandAfterUse) 
         {
-            llOwnerSay(parseString(g_sRemove));
-            llOwnerSay(g_sByeString);
+            Notify(g_sRemove + "\n" + g_sByeString);
+            llSleep(2.0);
             llDie();
         }
 }
@@ -110,8 +123,6 @@ default
 {
     state_entry()
     {
-        llSetTouchText(g_sUnpackString);  
-
     }
 
     attach(key id)
@@ -129,17 +140,19 @@ default
             // there is false idea that id  can be null only if object detached
             // In fact, disabling scripts during script being active, or lag 
             // during detachment may cause it happen on attach. 
-            llOwnerSay(g_sByeString);
+            llInstantMessage(g_kUser,g_sByeString);
         }
     }
     
     on_rez(integer param)
     {
-        llOwnerSay(parseString(g_sHello));
+        g_kUser = llGetOwner();
+        llSetTouchText(g_sUnpackString);
+        
+        Notify(g_sHello);
         
         if(g_bGiveOnRez && (llGetAttached() == 0)) 
         {
-            g_kUser = llGetOwner();
             GiveInventory();
         }
     }
