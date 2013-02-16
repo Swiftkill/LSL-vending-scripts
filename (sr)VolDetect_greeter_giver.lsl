@@ -19,6 +19,8 @@ list    g_lInventory = [];
 integer g_nNotecardLine;
 key     g_kQueryId;
 
+integer MAX_AV_COUNT = 40;
+
 ReadInventory()
 {
     if (g_lGreetings == [])
@@ -120,9 +122,9 @@ default
             }
         }
         // cleanup
-        while (llGetFreeMemory() < 512)
+        if (llGetListLength(name_list) > MAX_AV_COUNT)
         {
-            name_list = llList2List(name_list, 1, -1);
+            name_list = llList2List(name_list, 1, -MAX_AV_COUNT/2);
         }
     }
 
